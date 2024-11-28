@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "dev": "nodemon"
   },
   "keywords": [],
@@ -25,6 +25,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.1",
+    "@types/supertest": "^6.0.2",
     "nodemon": "^3.1.7",
     "prisma": "^5.22.0",
     "supertest": "^7.0.0",
