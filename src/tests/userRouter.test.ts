@@ -13,6 +13,6 @@ describe("User Router", () => {
       .post("/auth/register")
       .send({ username: "frodo", password: "password123" })
       .expect("Content-Type", /json/)
-      .expect(200);
+      .expect(201);
   });
 });
