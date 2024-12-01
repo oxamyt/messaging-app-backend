@@ -1,23 +1,18 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import prismaQueries from "../../prisma/prismaQueries";
+import { createUser } from "./prismaQueries";
 import { UserCredentials } from "../types/types";
 
-async function registerUser(
-  req: Request<{}, {}, UserCredentials>,
-  res: Response
-) {
+async function registerUser(req: Request, res: Response) {
   try {
-    const { username, password } = req.body;
+    const { username, password }: UserCredentials = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prismaQueries.createUser(username, hashedPassword);
+    await createUser({ username, password: hashedPassword });
     res.status(201).json({ message: "User registered successfully!" });
   } catch (err) {
     console.error(err);
   }
 }
 
-module.exports = {
-  registerUser,
-};
+export { registerUser };

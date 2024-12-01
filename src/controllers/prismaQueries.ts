@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import { UserCredentials } from "../src/types/types";
+import { UserCredentials } from "../types/types";
 
 async function createUser({ username, password }: UserCredentials) {
   try {
@@ -14,3 +14,5 @@ async function createUser({ username, password }: UserCredentials) {
     console.error(err);
   }
 }
+
+export { createUser };
