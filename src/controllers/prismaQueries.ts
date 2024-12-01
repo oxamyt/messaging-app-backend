@@ -15,4 +15,17 @@ async function createUser({ username, password }: UserCredentials) {
   }
 }
 
-export { createUser };
+async function findUser({ username }: { username: string }) {
+  try {
+    const user = await prisma.user.findUnique({ where: { username } });
+
+    if (!user) {
+      return;
+    }
+    return user;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+export { createUser, findUser };
