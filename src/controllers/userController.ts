@@ -13,12 +13,21 @@ function signToken(user: { id: number }) {
 async function registerUser(req: Request, res: Response) {
   try {
     const { username, password }: UserCredentials = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    await createUser({ username, password: hashedPassword });
-    res.status(201).json({ message: "User registered successfully!" });
+    const user = await findUser({ username });
+
+    if (user) {
+      res.status(400).json({ message: "Username already exists." });
+    } else {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await createUser({ username, password: hashedPassword });
+      res.status(201).json({ message: "User registered successfully!" });
+    }
   } catch (err) {
     console.error(err);
+    res
+      .status(500)
+      .json({ message: "Internal server error during registration" });
   }
 }
 
@@ -29,13 +38,13 @@ async function loginUser(req: Request, res: Response) {
     const user = await findUser({ username });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid username or password" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid username or password" });
     }
 
     const token = signToken({ id: user.id });
