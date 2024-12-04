@@ -1,8 +1,8 @@
 import request from "supertest";
 import express from "express";
 import userRouter from "../routes/userRouter";
-import { describe, it, expect, beforeEach } from "vitest";
-import { cleanupDatabase } from "../utils/cleanupDatbase";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { cleanupDatabase } from "../utils/cleanupDatabase";
 
 const app = express();
 
@@ -12,6 +12,10 @@ app.use("/auth", userRouter);
 
 describe("User Router", () => {
   beforeEach(async () => {
+    await cleanupDatabase();
+  });
+
+  afterAll(async () => {
     await cleanupDatabase();
   });
 

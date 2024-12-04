@@ -1,0 +1,62 @@
+import request from "supertest";
+import express from "express";
+import userRouter from "../routes/userRouter";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import { cleanupDatabase } from "../utils/cleanupDatabase";
+import messageRouter from "../routes/messageRouter";
+import passport from "passport";
+import { initializePassport } from "../utils/passportConfig";
+
+initializePassport(passport);
+
+const app = express();
+
+app.use(express.urlencoded({ extended: false }));
+app.use(passport.initialize());
+app.use(express.json());
+app.use("/auth", userRouter);
+app.use("/message", messageRouter);
+
+describe("Message Router", () => {
+  beforeEach(async () => {
+    await cleanupDatabase();
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  });
+
+  afterAll(async () => {
+    await cleanupDatabase();
+  });
+
+  it("should send a message between two users", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "billy", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+    console.log("Login Token:", token);
+
+    const messageResponse = await request(app)
+      .post("/message")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ receiverUsername: "billy", content: "Hello Billy!" })
+      .expect(201);
+
+    expect(messageResponse.body.message).toBe("Message sent successfully!");
+    expect(messageResponse.body.content).toBe("Hello Billy!");
+  });
+});

@@ -15,9 +15,12 @@ async function createUser({ username, password }: UserCredentials) {
   }
 }
 
-async function findUser({ username }: { username: string }) {
+async function findUser({ userdata }: { userdata: string | number }) {
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
+    const findCondition =
+      typeof userdata === "number" ? { id: userdata } : { username: userdata };
+
+    const user = await prisma.user.findUnique({ where: findCondition });
 
     if (!user) {
       return;
@@ -28,4 +31,22 @@ async function findUser({ username }: { username: string }) {
   }
 }
 
-export { createUser, findUser };
+async function createMessage({
+  senderId,
+  receiverId,
+  content,
+}: {
+  senderId: number;
+  receiverId: number;
+  content: string;
+}) {
+  return prisma.message.create({
+    data: {
+      senderId,
+      receiverId,
+      content,
+    },
+  });
+}
+
+export { createUser, findUser, createMessage };

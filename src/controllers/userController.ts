@@ -7,14 +7,14 @@ import jwt from "jsonwebtoken";
 const jwtSecret = process.env.PASSPORT_SECRET!;
 
 function signToken(user: { id: number }) {
-  return jwt.sign({ id: user.id }, jwtSecret, { expiresIn: "3h" });
+  return jwt.sign({ sub: user.id }, jwtSecret, { expiresIn: "3h" });
 }
 
 async function registerUser(req: Request, res: Response) {
   try {
     const { username, password }: UserCredentials = req.body;
 
-    const user = await findUser({ username });
+    const user = await findUser({ userdata: username });
 
     if (user) {
       res.status(400).json({ message: "Username already exists." });
@@ -35,7 +35,7 @@ async function loginUser(req: Request, res: Response) {
   try {
     const { username, password }: UserCredentials = req.body;
 
-    const user = await findUser({ username });
+    const user = await findUser({ userdata: username });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid username or password" });
