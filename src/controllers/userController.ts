@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import { createUser, findUser } from "./prismaQueries";
-import { UserCredentials } from "../types/types";
+import { createUser, findUser, updateUser } from "./prismaQueries";
+import { UserCredentials, UserProfile } from "../types/types";
 import jwt from "jsonwebtoken";
+import isUser from "../utils/isUser";
 
 const jwtSecret = process.env.PASSPORT_SECRET!;
 
@@ -56,4 +57,28 @@ async function loginUser(req: Request, res: Response) {
   }
 }
 
-export { registerUser, loginUser };
+async function putUpdateUser(req: Request, res: Response) {
+  try {
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+    const { bio, avatarUrl }: UserProfile = req.body;
+
+    const userId = req.user.id;
+
+    const updatedUser = await updateUser({ bio, avatarUrl, id: userId });
+
+    if (!updatedUser) {
+      return res.status(401).json({ message: "Invalid user" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully!", bio: updatedUser.bio });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error during updating" });
+  }
+}
+
+export { registerUser, loginUser, putUpdateUser };

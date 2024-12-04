@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import { UserCredentials } from "../types/types";
+import { UserCredentials, UserProfile } from "../types/types";
 
 async function createUser({ username, password }: UserCredentials) {
   try {
@@ -49,4 +49,20 @@ async function createMessage({
   });
 }
 
-export { createUser, findUser, createMessage };
+async function updateUser({ bio, avatarUrl, id }: UserProfile) {
+  try {
+    return await prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        ...(bio && { bio }),
+        ...(avatarUrl && { avatarUrl }),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+export { createUser, findUser, createMessage, updateUser };

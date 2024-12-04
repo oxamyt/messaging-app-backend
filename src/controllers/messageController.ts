@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import { findUser, createMessage } from "./prismaQueries";
-
-function isUser(req: Request): req is Request & { user: { id: number } } {
-  return req.user !== undefined;
-}
+import isUser from "../utils/isUser";
 
 async function sendMessage(req: Request, res: Response) {
   try {
