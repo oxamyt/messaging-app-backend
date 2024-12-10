@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { findUser, createMessage } from "./prismaQueries";
+import { findUser, createMessage, fetchMessages } from "./prismaQueries";
 import isUser from "../utils/isUser";
 
 async function sendMessage(req: Request, res: Response) {
@@ -51,4 +51,22 @@ async function sendMessage(req: Request, res: Response) {
   }
 }
 
-export { sendMessage };
+async function retrieveMessages(req: Request, res: Response) {
+  try {
+    const { targetUsername } = req.body;
+
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+
+    const retrieverId = req.user.id;
+
+    const messages = await fetchMessages({ retrieverId, targetUsername });
+    res.status(200).json({ messages });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error retrieving messages" });
+  }
+}
+
+export { sendMessage, retrieveMessages };

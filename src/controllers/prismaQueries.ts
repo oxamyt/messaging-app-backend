@@ -65,4 +65,39 @@ async function updateUser({ bio, avatarUrl, id }: UserProfile) {
   }
 }
 
-export { createUser, findUser, createMessage, updateUser };
+async function fetchMessages({
+  retrieverId,
+  targetUsername,
+}: {
+  retrieverId: number;
+  targetUsername: string;
+}) {
+  try {
+    const targetUser = await prisma.user.findUnique({
+      where: { username: targetUsername },
+    });
+
+    if (!targetUser) {
+      return { message: "Target user not found" };
+    }
+
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: retrieverId, receiverId: targetUser.id },
+          { senderId: targetUser.id, receiverId: retrieverId },
+        ],
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return messages;
+  } catch (err) {
+    console.error(err);
+    return { message: "Error retrieving messages" };
+  }
+}
+
+export { createUser, findUser, createMessage, updateUser, fetchMessages };
