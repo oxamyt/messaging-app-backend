@@ -3,11 +3,13 @@ import userRouter from "./routes/userRouter";
 import { initializePassport } from "./utils/passportConfig";
 import passport from "passport";
 import messageRouter from "./routes/messageRouter";
+import cors from "cors";
 
 initializePassport(passport);
 
 const app = express();
 const port = 3000;
+app.use(cors());
 
 app.use(passport.initialize());
 app.use(express.json());
