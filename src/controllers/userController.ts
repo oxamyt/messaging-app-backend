@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import { createUser, findUser, updateUser } from "./prismaQueries";
+import { createUser, findUser, updateUser, fetchUsers } from "./prismaQueries";
 import { UserCredentials, UserProfile } from "../types/types";
 import jwt from "jsonwebtoken";
 import isUser from "../utils/isUser";
@@ -81,4 +81,25 @@ async function putUpdateUser(req: Request, res: Response) {
   }
 }
 
-export { registerUser, loginUser, putUpdateUser };
+async function getUsers(req: Request, res: Response) {
+  try {
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+
+    const userId = req.user.id;
+
+    const users = await fetchUsers({ userId });
+
+    if (!users) {
+      return res.status(401).json({ message: "Error fetching users" });
+    }
+
+    res.status(200).json({ users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error during updating" });
+  }
+}
+
+export { registerUser, loginUser, putUpdateUser, getUsers };

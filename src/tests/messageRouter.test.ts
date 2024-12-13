@@ -17,10 +17,9 @@ app.use(express.json());
 app.use("/auth", userRouter);
 app.use("/message", messageRouter);
 
-describe("Message Router", () => {
+describe("Message Router", async () => {
   beforeEach(async () => {
     await cleanupDatabase();
-    await new Promise((resolve) => setTimeout(resolve, 800));
   });
 
   afterAll(async () => {

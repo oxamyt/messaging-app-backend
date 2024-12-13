@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { cleanupDatabase } from "../utils/cleanupDatabase";
 import passport from "passport";
 import { initializePassport } from "../utils/passportConfig";
+import { UserResponse } from "../types/types";
 
 initializePassport(passport);
 const app = express();
@@ -14,7 +15,7 @@ app.use(passport.initialize());
 app.use(express.json());
 app.use("/auth", userRouter);
 
-describe("User Router", () => {
+describe("User Router", async () => {
   beforeEach(async () => {
     await cleanupDatabase();
   });
@@ -84,7 +85,7 @@ describe("User Router", () => {
 
     const response = await request(app)
       .post("/auth/login")
-      .send({ username: "sam", password: "wrongpassword" })
+      .send({ username: "sam", password: "wrongPassword" })
       .expect(401);
 
     expect(response.body.message).toBe("Invalid username or password");
@@ -112,5 +113,41 @@ describe("User Router", () => {
 
     expect(updateResponse.body.message).toBe("Profile updated successfully!");
     expect(updateResponse.body.bio).toBe("A really cool bio");
+  });
+
+  it("should allow fetch users with jwt", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "sam", password: "password123" })
+      .expect(201);
+
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "guts", password: "password123" })
+      .expect(201);
+
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "frodo", password: "password123" })
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "sam", password: "password123" })
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const response = await request(app)
+      .get("/auth/users")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    const responseBody: UserResponse = response.body;
+    expect(response.body.users).toBeDefined();
+    const usernames = responseBody.users.map((user) => user.username);
+    expect(usernames).toContain("guts");
+    expect(usernames).toContain("frodo");
   });
 });

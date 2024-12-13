@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   putUpdateUser,
+  getUsers,
 } from "../controllers/userController";
 import { validateRegistration, validateRequest } from "../utils/validation";
 import passport from "passport";
@@ -20,6 +21,11 @@ userRouter.put(
   "/update",
   passport.authenticate("jwt", { session: false }),
   putUpdateUser
+);
+userRouter.get(
+  "/users",
+  passport.authenticate("jwt", { session: false }),
+  getUsers
 );
 
 export default userRouter;

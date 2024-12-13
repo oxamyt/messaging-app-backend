@@ -8,3 +8,8 @@ export interface UserProfile {
   avatarUrl: string;
   id: number;
 }
+
+export interface UserResponse {
+  message: string;
+  users: { username: string }[];
+}

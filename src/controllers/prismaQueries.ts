@@ -100,4 +100,32 @@ async function fetchMessages({
   }
 }
 
-export { createUser, findUser, createMessage, updateUser, fetchMessages };
+async function fetchUsers({ userId }: { userId: number }) {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          not: userId,
+        },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+      },
+    });
+    return users;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw new Error("Failed to fetch users");
+  }
+}
+
+export {
+  createUser,
+  findUser,
+  createMessage,
+  updateUser,
+  fetchMessages,
+  fetchUsers,
+};
