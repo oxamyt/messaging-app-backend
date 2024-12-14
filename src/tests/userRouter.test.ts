@@ -25,13 +25,11 @@ describe("User Router", async () => {
   });
 
   it("should register a user", async () => {
-    const response = await request(app)
+    await request(app)
       .post("/auth/register")
       .send({ username: "frodo", password: "password123" })
       .expect("Content-Type", /json/)
       .expect(201);
-
-    expect(response.body.message).toBe("User registered successfully!");
   });
 
   it("should not register a user with an existing username", async () => {

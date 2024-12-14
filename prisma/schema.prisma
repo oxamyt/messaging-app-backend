@@ -18,7 +18,7 @@ model User {
   username  String   @unique
   password  String
   bio       String?
-  avatarUrl String?
+  avatarUrl String  @default("https://res.cloudinary.com/dehoidlo0/image/upload/v1734176820/messaging-app/r49pwufgvi6inrjc8hlj.png")
   messagesSent  Message[] @relation("SentMessages")
   messagesReceived Message[] @relation("ReceivedMessages")
   createdAt DateTime @default(now())
