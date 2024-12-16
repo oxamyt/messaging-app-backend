@@ -14,7 +14,7 @@ async function sendMessage(req: Request, res: Response) {
 
     let receiver;
     if (receiverId) {
-      receiver = await findUser({ userdata: receiverId });
+      receiver = await findUser({ userdata: parseInt(receiverId) });
     } else if (receiverUsername) {
       receiver = await findUser({ userdata: receiverUsername });
     } else {
@@ -26,14 +26,16 @@ async function sendMessage(req: Request, res: Response) {
     const sender = await findUser({ userdata: senderId });
 
     if (!sender) {
+      console.log("sender error");
       return res.status(404).json({ message: "Sender not found" });
     }
 
     if (!receiver) {
+      console.log("receiver error");
       return res.status(404).json({ message: "Receiver not found" });
     }
 
-    const message = await createMessage({
+    await createMessage({
       senderId: sender.id,
       receiverId: receiver.id,
       content,
