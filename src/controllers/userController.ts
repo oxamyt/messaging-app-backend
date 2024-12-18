@@ -21,8 +21,14 @@ async function registerUser(req: Request, res: Response) {
       res.status(400).json({ message: "Username already exists." });
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
-      await createUser({ username, password: hashedPassword });
-      res.status(201).json({ message: "User registered successfully!" });
+      const user = await createUser({ username, password: hashedPassword });
+
+      if (!user) {
+        return res.status(401).json({ message: "Error creating a user" });
+      }
+      res
+        .status(201)
+        .json({ message: "User registered successfully!", userId: user.id });
     }
   } catch (err) {
     console.error(err);

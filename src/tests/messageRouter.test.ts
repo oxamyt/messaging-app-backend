@@ -66,11 +66,14 @@ describe("Message Router", async () => {
       .expect("Content-Type", /json/)
       .expect(201);
 
-    await request(app)
+    const billyRegisterResponse = await request(app)
       .post("/auth/register")
       .send({ username: "billy", password: "password123" })
       .expect("Content-Type", /json/)
       .expect(201);
+
+    const billyId = billyRegisterResponse.body.userId;
+    expect(billyId).toBeDefined();
 
     const loginResponse = await request(app)
       .post("/auth/login")
@@ -84,19 +87,19 @@ describe("Message Router", async () => {
     await request(app)
       .post("/message")
       .set("Authorization", `Bearer ${token}`)
-      .send({ receiverUsername: "billy", content: "Hello Billy!" })
+      .send({ receiverId: billyId, content: "Hello Billy!" })
       .expect(201);
 
     await request(app)
       .post("/message")
       .set("Authorization", `Bearer ${token}`)
-      .send({ receiverUsername: "billy", content: "How are you?" })
+      .send({ receiverId: billyId, content: "How are you?" })
       .expect(201);
 
     const messagesResponse = await request(app)
       .post("/message/retrieve")
       .set("Authorization", `Bearer ${token}`)
-      .send({ targetUsername: "billy" })
+      .send({ targetId: billyId })
       .expect(200);
 
     expect(messagesResponse.body.messages[0].content).toBe("Hello Billy!");

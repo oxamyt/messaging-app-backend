@@ -55,7 +55,7 @@ async function sendMessage(req: Request, res: Response) {
 
 async function retrieveMessages(req: Request, res: Response) {
   try {
-    const { targetUsername } = req.body;
+    const { targetId } = req.body;
 
     if (!isUser(req)) {
       return res.status(400).json({ message: "Sender not authenticated" });
@@ -63,7 +63,9 @@ async function retrieveMessages(req: Request, res: Response) {
 
     const retrieverId = req.user.id;
 
-    const messages = await fetchMessages({ retrieverId, targetUsername });
+    const targetIdNumber = parseInt(targetId);
+
+    const messages = await fetchMessages({ retrieverId, targetIdNumber });
     res.status(200).json({ messages });
   } catch (err) {
     console.error(err);

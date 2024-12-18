@@ -67,14 +67,14 @@ async function updateUser({ bio, avatarUrl, id }: UserProfile) {
 
 async function fetchMessages({
   retrieverId,
-  targetUsername,
+  targetIdNumber,
 }: {
   retrieverId: number;
-  targetUsername: string;
+  targetIdNumber: number;
 }) {
   try {
     const targetUser = await prisma.user.findUnique({
-      where: { username: targetUsername },
+      where: { id: targetIdNumber },
     });
 
     if (!targetUser) {
