@@ -121,6 +121,26 @@ async function fetchUsers({ userId }: { userId: number }) {
   }
 }
 
+async function fetchUser({ userId }: { userId: number }) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        bio: true,
+      },
+    });
+    return user;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw new Error("Failed to fetch users");
+  }
+}
+
 export {
   createUser,
   findUser,
@@ -128,4 +148,5 @@ export {
   updateUser,
   fetchMessages,
   fetchUsers,
+  fetchUser,
 };

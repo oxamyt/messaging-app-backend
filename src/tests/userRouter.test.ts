@@ -148,4 +148,29 @@ describe("User Router", async () => {
     expect(usernames).toContain("guts");
     expect(usernames).toContain("frodo");
   });
+
+  it("should allow fetch user for profile with jwt", async () => {
+    const registerResponse = await request(app)
+      .post("/auth/register")
+      .send({ username: "sam", password: "password123" })
+      .expect(201);
+
+    const samId = registerResponse.body.userId;
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "sam", password: "password123" })
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const response = await request(app)
+      .get(`/auth/users/${samId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body.user).toBeDefined();
+    expect(response.body.user.username).toContain("sam");
+  });
 });
