@@ -62,7 +62,7 @@ async function loginUser(req: Request, res: Response) {
 
     const token = signToken({ id: user.id });
 
-    res.status(200).json({ token });
+    res.status(200).json({ token, userId: user.id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal server error during login" });
@@ -74,11 +74,16 @@ async function putUpdateUser(req: Request, res: Response) {
     if (!isUser(req)) {
       return res.status(400).json({ message: "Sender not authenticated" });
     }
-    const { bio, avatarUrl }: UserProfile = req.body;
+    const { bio, avatarUrl, username }: UserProfile = req.body;
 
     const userId = req.user.id;
 
-    const updatedUser = await updateUser({ bio, avatarUrl, id: userId });
+    const updatedUser = await updateUser({
+      bio,
+      avatarUrl,
+      id: userId,
+      username,
+    });
 
     if (!updatedUser) {
       return res.status(401).json({ message: "Invalid user" });

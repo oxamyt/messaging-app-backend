@@ -49,7 +49,7 @@ async function createMessage({
   });
 }
 
-async function updateUser({ bio, avatarUrl, id }: UserProfile) {
+async function updateUser({ bio, avatarUrl, id, username }: UserProfile) {
   try {
     return await prisma.user.update({
       where: {
@@ -58,6 +58,7 @@ async function updateUser({ bio, avatarUrl, id }: UserProfile) {
       data: {
         ...(bio && { bio }),
         ...(avatarUrl && { avatarUrl }),
+        ...(username && { username }),
       },
     });
   } catch (err) {
@@ -136,8 +137,8 @@ async function fetchUser({ userId }: { userId: number }) {
     });
     return user;
   } catch (error) {
-    console.error("Error fetching users:", error);
-    throw new Error("Failed to fetch users");
+    console.error("Error fetching user:", error);
+    throw new Error("Failed to fetch user");
   }
 }
 

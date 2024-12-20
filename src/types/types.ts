@@ -4,6 +4,7 @@ export interface UserCredentials {
 }
 
 export interface UserProfile {
+  username: string;
   bio: string;
   avatarUrl: string;
   id: number;
