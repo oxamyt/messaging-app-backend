@@ -6,10 +6,12 @@ import {
   updateUser,
   fetchUsers,
   fetchUser,
+  loadAvatar,
 } from "./prismaQueries";
 import { UserCredentials, UserProfile } from "../types/types";
 import jwt from "jsonwebtoken";
 import isUser from "../utils/isUser";
+import cloudinary from "../utils/cloudinary";
 
 const jwtSecret = process.env.PASSPORT_SECRET!;
 
@@ -142,4 +144,61 @@ async function getUser(req: Request, res: Response) {
   }
 }
 
-export { registerUser, loginUser, putUpdateUser, getUsers, getUser };
+async function uploadAvatar(req: Request, res: Response) {
+  console.log("sss");
+  try {
+    if (!isUser(req)) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    if (!file.mimetype.startsWith("image/")) {
+      return res
+        .status(400)
+        .json({ message: "Invalid file type. Only images are allowed." });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder: "avatars" }, (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        })
+        .end(file.buffer);
+    });
+
+    if (!result) {
+      throw new Error("Failed to upload image to Cloudinary");
+    }
+
+    const userId = req.user.id;
+    const user = await fetchUser({ userId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const avatarUrl = (result as any).secure_url;
+    await loadAvatar({ userId, avatarUrl });
+
+    return res.status(200).json({
+      message: "Avatar updated successfully",
+      avatarUrl,
+    });
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+}
+
+export {
+  registerUser,
+  loginUser,
+  putUpdateUser,
+  getUsers,
+  getUser,
+  uploadAvatar,
+};

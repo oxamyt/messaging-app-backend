@@ -74,20 +74,28 @@ async function fetchMessages({
   targetIdNumber: number;
 }) {
   try {
-    const targetUser = await prisma.user.findUnique({
-      where: { id: targetIdNumber },
-    });
-
-    if (!targetUser) {
-      return { message: "Target user not found" };
-    }
-
     const messages = await prisma.message.findMany({
       where: {
         OR: [
-          { senderId: retrieverId, receiverId: targetUser.id },
-          { senderId: targetUser.id, receiverId: retrieverId },
+          { senderId: retrieverId, receiverId: targetIdNumber },
+          { senderId: targetIdNumber, receiverId: retrieverId },
         ],
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "asc",
@@ -142,6 +150,24 @@ async function fetchUser({ userId }: { userId: number }) {
   }
 }
 
+async function loadAvatar({
+  userId,
+  avatarUrl,
+}: {
+  userId: number;
+  avatarUrl: string;
+}) {
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+    });
+    return updatedUser;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 export {
   createUser,
   findUser,
@@ -150,4 +176,5 @@ export {
   fetchMessages,
   fetchUsers,
   fetchUser,
+  loadAvatar,
 };
