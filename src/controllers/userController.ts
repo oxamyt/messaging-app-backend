@@ -145,7 +145,6 @@ async function getUser(req: Request, res: Response) {
 }
 
 async function uploadAvatar(req: Request, res: Response) {
-  console.log("sss");
   try {
     if (!isUser(req)) {
       return res.status(401).json({ message: "Unauthorized access" });

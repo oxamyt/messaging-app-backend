@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
-import { findUser, createMessage, fetchMessages } from "./prismaQueries";
+import {
+  findUser,
+  createMessage,
+  fetchMessages,
+  fetchUser,
+} from "./prismaQueries";
 import isUser from "../utils/isUser";
+import cloudinary from "../utils/cloudinary";
 
 async function sendMessage(req: Request, res: Response) {
   try {
@@ -73,4 +79,69 @@ async function retrieveMessages(req: Request, res: Response) {
   }
 }
 
-export { sendMessage, retrieveMessages };
+async function sendImage(req: Request, res: Response) {
+  const receiverIdString = req.body.receiverId;
+
+  const receiverId = parseInt(receiverIdString);
+
+  try {
+    if (!isUser(req)) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    if (!file.mimetype.startsWith("image/")) {
+      return res
+        .status(400)
+        .json({ message: "Invalid file type. Only images are allowed." });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder: "images" }, (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        })
+        .end(file.buffer);
+    });
+
+    if (!result) {
+      throw new Error("Failed to upload image to Cloudinary");
+    }
+
+    const userId = req.user.id;
+
+    const senderUser = await fetchUser({ userId });
+    if (!senderUser) {
+      return res.status(404).json({ message: "Sender user not found" });
+    }
+
+    const receiverUser = await fetchUser({ userId: receiverId });
+    if (!receiverUser) {
+      return res.status(404).json({ message: "Receiver user not found" });
+    }
+
+    const imageUrl = (result as any).secure_url;
+
+    const senderId = req.user.id;
+    await createMessage({
+      senderId,
+      receiverId,
+      content: imageUrl,
+    });
+
+    return res.status(200).json({
+      message: "Image uploaded successfully",
+      imageUrl,
+    });
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+}
+
+export { sendMessage, retrieveMessages, sendImage };
