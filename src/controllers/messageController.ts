@@ -4,6 +4,10 @@ import {
   createMessage,
   fetchMessages,
   fetchUser,
+  createGroupChat,
+  createGroupMessage,
+  fetchGroupChat,
+  removeGroupChat,
 } from "./prismaQueries";
 import isUser from "../utils/isUser";
 import cloudinary from "../utils/cloudinary";
@@ -144,4 +148,93 @@ async function sendImage(req: Request, res: Response) {
   }
 }
 
-export { sendMessage, retrieveMessages, sendImage };
+async function createGroup(req: Request, res: Response) {
+  try {
+    const { name } = req.body;
+    if (!isUser(req)) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+    const userId = req.user.id;
+    const groupChat = await createGroupChat({ name, userId });
+    res
+      .status(201)
+      .json({ groupChat, message: "Group Chat created successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error creating group chat" });
+  }
+}
+
+async function sendGroupMessage(req: Request, res: Response) {
+  try {
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+
+    const { groupId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id;
+
+    const numberGroupId = parseInt(groupId);
+    const groupChat = await fetchGroupChat({ groupId: numberGroupId });
+    if (!groupChat) {
+      return res.status(404).json({ message: "Group chat not found" });
+    }
+    const messageContent = await createGroupMessage({
+      content,
+      groupId: numberGroupId,
+      userId,
+    });
+
+    if (!messageContent) {
+      return res
+        .status(404)
+        .json({ message: "Could not send a message to group chat" });
+    }
+
+    res
+      .status(201)
+      .json({ messageContent, message: "Message sent successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error sending message to group chat" });
+  }
+}
+
+async function deleteGroupChat(req: Request, res: Response) {
+  try {
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+    const { groupId } = req.params;
+    const userId = req.user.id;
+    const numberGroupId = parseInt(groupId);
+    const groupChat = await fetchGroupChat({ groupId: numberGroupId });
+
+    if (groupChat) {
+      if (groupChat.creatorId !== userId) {
+        return res
+          .status(404)
+          .json({ message: "You are not a creator of group chat" });
+      }
+
+      await removeGroupChat({ groupId: numberGroupId });
+
+      res.status(201).json({ message: "Group Chat deleted successfully!" });
+    } else {
+      return res.status(404).json({ message: "Group Chat does not exist" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error sending message to group chat" });
+  }
+}
+
+export {
+  sendMessage,
+  retrieveMessages,
+  sendImage,
+  createGroup,
+  sendGroupMessage,
+  deleteGroupChat,
+};

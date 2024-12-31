@@ -168,6 +168,74 @@ async function loadAvatar({
   }
 }
 
+async function createGroupChat({
+  name,
+  userId,
+}: {
+  name: string;
+  userId: number;
+}) {
+  try {
+    const groupChat = await prisma.groupChat.create({
+      data: {
+        name,
+        creatorId: userId,
+      },
+    });
+    return groupChat;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function createGroupMessage({
+  content,
+  groupId,
+  userId,
+}: {
+  content: string;
+  groupId: number;
+  userId: number;
+}) {
+  try {
+    const groupMessage = await prisma.message.create({
+      data: {
+        content,
+        groupId,
+        senderId: userId,
+      },
+    });
+    return groupMessage;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function fetchGroupChat({ groupId }: { groupId: number }) {
+  try {
+    const groupChat = await prisma.groupChat.findUnique({
+      where: {
+        id: groupId,
+      },
+    });
+    return groupChat;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function removeGroupChat({ groupId }: { groupId: number }) {
+  try {
+    await prisma.groupChat.delete({
+      where: {
+        id: groupId,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 export {
   createUser,
   findUser,
@@ -177,4 +245,8 @@ export {
   fetchUsers,
   fetchUser,
   loadAvatar,
+  createGroupChat,
+  createGroupMessage,
+  fetchGroupChat,
+  removeGroupChat,
 };

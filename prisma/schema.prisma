@@ -23,14 +23,31 @@ model User {
   messagesReceived Message[] @relation("ReceivedMessages")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  groupChats GroupChat[] @relation("groupMembers")
+  createdGroupChats GroupChat[] @relation("groupCreator")
 }
+
 
 model Message {
   id        Int      @id @default(autoincrement())
   senderId  Int
-  receiverId Int
+  receiverId Int?
   content   String
   createdAt DateTime @default(now())
   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
-  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiver  User?     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  groupId Int? 
+  groupChat GroupChat? @relation("groupMessages", fields: [groupId], references: [id])
+}
+
+model GroupChat {
+  id Int @id @default(autoincrement())
+  name String @unique
+  members User[] @relation("groupMembers")
+  avatarUrl String  @default("https://res.cloudinary.com/dehoidlo0/image/upload/v1735631463/messaging-app/pvzk3iotxl5lko4zjmnm.jpg")
+  messages Message[] @relation("groupMessages")
+  creatorId Int 
+  creator    User    @relation("groupCreator", fields: [creatorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

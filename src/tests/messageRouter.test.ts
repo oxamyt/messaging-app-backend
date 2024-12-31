@@ -105,4 +105,173 @@ describe("Message Router", async () => {
     expect(messagesResponse.body.messages[0].content).toBe("Hello Billy!");
     expect(messagesResponse.body.messages[1].content).toBe("How are you?");
   });
+
+  it("user should be able to create groupChat", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const groupChatResponse = await request(app)
+      .post("/message/group")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Cool Chat" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    expect(groupChatResponse.body.groupChat.name).toBe("Cool Chat");
+    expect(groupChatResponse.body.message).toBe(
+      "Group Chat created successfully"
+    );
+  });
+
+  it("user should be able to send message into groupChat", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const groupChatResponse = await request(app)
+      .post("/message/group")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Cool Chat" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    expect(groupChatResponse.body.groupChat.name).toBe("Cool Chat");
+    expect(groupChatResponse.body.message).toBe(
+      "Group Chat created successfully"
+    );
+
+    const groupId = groupChatResponse.body.groupChat.id;
+
+    const messageGroupResponse = await request(app)
+      .post(`/message/${groupId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ content: "Hi everyone!" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    expect(messageGroupResponse.body.message).toBe("Message sent successfully");
+    expect(messageGroupResponse.body.messageContent.content).toBe(
+      "Hi everyone!"
+    );
+  });
+
+  it("user who created should be able to delete groupChat", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const groupChatResponse = await request(app)
+      .post("/message/group")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Cool Chat" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const groupId = groupChatResponse.body.groupChat.id;
+
+    const deleteGroupChatResponse = await request(app)
+      .delete(`/message/${groupId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ content: "Hi everyone!" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    expect(deleteGroupChatResponse.body.message).toBe(
+      "Group Chat deleted successfully!"
+    );
+
+    const messageGroupResponse = await request(app)
+      .post(`/message/${groupId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ content: "Hi everyone!" })
+      .expect("Content-Type", /json/)
+      .expect(404);
+
+    expect(messageGroupResponse.body.message).toBe("Group chat not found");
+  });
+
+  it("user who did not create should not be able to delete groupChat", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const groupChatResponse = await request(app)
+      .post("/message/group")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Cool Chat" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const groupId = groupChatResponse.body.groupChat.id;
+
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "joe", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const joeLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "joe", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const joeToken = joeLoginResponse.body.token;
+
+    const deleteGroupChatResponse = await request(app)
+      .delete(`/message/${groupId}`)
+      .set("Authorization", `Bearer ${joeToken}`)
+      .send({ content: "Hi everyone!" })
+      .expect("Content-Type", /json/)
+      .expect(404);
+
+    expect(deleteGroupChatResponse.body.message).toBe(
+      "You are not a creator of group chat"
+    );
+  });
 });

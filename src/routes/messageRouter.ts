@@ -3,6 +3,9 @@ import {
   sendMessage,
   retrieveMessages,
   sendImage,
+  createGroup,
+  sendGroupMessage,
+  deleteGroupChat,
 } from "../controllers/messageController";
 import passport from "passport";
 const messageRouter = Router();
@@ -29,6 +32,21 @@ messageRouter.post(
   "/retrieve",
   passport.authenticate("jwt", { session: false }),
   retrieveMessages
+);
+messageRouter.post(
+  "/group",
+  passport.authenticate("jwt", { session: false }),
+  createGroup
+);
+messageRouter.post(
+  "/:groupId",
+  passport.authenticate("jwt", { session: false }),
+  sendGroupMessage
+);
+messageRouter.delete(
+  "/:groupId",
+  passport.authenticate("jwt", { session: false }),
+  deleteGroupChat
 );
 
 export default messageRouter;
