@@ -274,4 +274,98 @@ describe("Message Router", async () => {
       "You are not a creator of group chat"
     );
   });
+
+  it("user should retrieve messages from groupChat", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const groupChatResponse = await request(app)
+      .post("/message/group")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Cool Chat" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const groupId = groupChatResponse.body.groupChat.id;
+
+    await request(app)
+      .post(`/message/${groupId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ content: "Hi everyone!" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const getGroupMessagesResponse = await request(app)
+      .get(`/message/${groupId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    const messages = getGroupMessagesResponse.body.messages;
+    expect(messages).toBeDefined();
+    expect(Array.isArray(messages)).toBe(true);
+    expect(messages).toContainEqual(
+      expect.objectContaining({ content: "Hi everyone!" })
+    );
+  });
+
+  it("user should retrieve all groupChats", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(201);
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username: "harry", password: "password123" })
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const token = loginResponse.body.token;
+    expect(token).toBeDefined();
+
+    const groupChats = [
+      { name: "Cool Chat" },
+      { name: "Great Chat" },
+      { name: "Monkey Chat" },
+    ];
+
+    for (const groupChat of groupChats) {
+      await request(app)
+        .post("/message/group")
+        .set("Authorization", `Bearer ${token}`)
+        .send(groupChat)
+        .expect("Content-Type", /json/)
+        .expect(201);
+    }
+
+    const getGroupChatsResponse = await request(app)
+      .get("/message/group")
+      .set("Authorization", `Bearer ${token}`)
+      .expect("Content-Type", /json/)
+      .expect(200);
+
+    const retrievedGroupChats = getGroupChatsResponse.body.groupChats;
+    expect(retrievedGroupChats).toBeDefined();
+    expect(Array.isArray(retrievedGroupChats)).toBe(true);
+    expect(retrievedGroupChats.length).toBe(groupChats.length);
+
+    for (const groupChat of groupChats) {
+      expect(retrievedGroupChats).toContainEqual(
+        expect.objectContaining({ name: groupChat.name })
+      );
+    }
+  });
 });

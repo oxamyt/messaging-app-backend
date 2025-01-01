@@ -8,6 +8,8 @@ import {
   createGroupMessage,
   fetchGroupChat,
   removeGroupChat,
+  fetchGroupMessages,
+  fetchGroupChats,
 } from "./prismaQueries";
 import isUser from "../utils/isUser";
 import cloudinary from "../utils/cloudinary";
@@ -230,6 +232,43 @@ async function deleteGroupChat(req: Request, res: Response) {
   }
 }
 
+async function getGroupMessages(req: Request, res: Response) {
+  try {
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+    const { groupId } = req.params;
+    const numberGroupId = parseInt(groupId);
+    const groupChat = await fetchGroupChat({ groupId: numberGroupId });
+
+    if (groupChat) {
+      const messages = await fetchGroupMessages({ groupId: numberGroupId });
+
+      res.status(200).json({ messages });
+    } else {
+      return res.status(404).json({ message: "Group Chat does not exist" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching message to group chat" });
+  }
+}
+
+async function getGroupChats(req: Request, res: Response) {
+  try {
+    if (!isUser(req)) {
+      return res.status(400).json({ message: "Sender not authenticated" });
+    }
+
+    const groupChats = await fetchGroupChats();
+
+    res.status(200).json({ groupChats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching message to group chat" });
+  }
+}
+
 export {
   sendMessage,
   retrieveMessages,
@@ -237,4 +276,6 @@ export {
   createGroup,
   sendGroupMessage,
   deleteGroupChat,
+  getGroupMessages,
+  getGroupChats,
 };

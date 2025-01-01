@@ -236,6 +236,44 @@ async function removeGroupChat({ groupId }: { groupId: number }) {
   }
 }
 
+async function fetchGroupMessages({ groupId }: { groupId: number }) {
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        groupId,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return messages;
+  } catch (err) {
+    console.error("Error retrieving group messages:", err);
+    return { message: "Error retrieving group messages" };
+  }
+}
+
+async function fetchGroupChats() {
+  try {
+    const groupChats = await prisma.groupChat.findMany();
+
+    return groupChats;
+  } catch (err) {
+    console.error("Error retrieving group chats:", err);
+    return { message: "Error retrieving group chats" };
+  }
+}
+
 export {
   createUser,
   findUser,
@@ -249,4 +287,6 @@ export {
   createGroupMessage,
   fetchGroupChat,
   removeGroupChat,
+  fetchGroupMessages,
+  fetchGroupChats,
 };
