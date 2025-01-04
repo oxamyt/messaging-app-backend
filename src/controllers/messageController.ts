@@ -86,10 +86,6 @@ async function retrieveMessages(req: Request, res: Response) {
 }
 
 async function sendImage(req: Request, res: Response) {
-  const receiverIdString = req.body.receiverId;
-
-  const receiverId = parseInt(receiverIdString);
-
   try {
     if (!isUser(req)) {
       return res.status(401).json({ message: "Unauthorized access" });
@@ -119,26 +115,42 @@ async function sendImage(req: Request, res: Response) {
       throw new Error("Failed to upload image to Cloudinary");
     }
 
-    const userId = req.user.id;
-
-    const senderUser = await fetchUser({ userId });
-    if (!senderUser) {
-      return res.status(404).json({ message: "Sender user not found" });
-    }
-
-    const receiverUser = await fetchUser({ userId: receiverId });
-    if (!receiverUser) {
-      return res.status(404).json({ message: "Receiver user not found" });
-    }
-
     const imageUrl = (result as any).secure_url;
+    const userId = req.user.id;
+    const { receiverId, groupId } = req.body;
 
-    const senderId = req.user.id;
-    await createMessage({
-      senderId,
-      receiverId,
-      content: imageUrl,
-    });
+    if (receiverId) {
+      const senderUser = await fetchUser({ userId });
+      if (!senderUser) {
+        return res.status(404).json({ message: "Sender user not found" });
+      }
+
+      const receiverUser = await fetchUser({ userId: parseInt(receiverId) });
+      if (!receiverUser) {
+        return res.status(404).json({ message: "Receiver user not found" });
+      }
+
+      await createMessage({
+        senderId: userId,
+        receiverId: parseInt(receiverId),
+        content: imageUrl,
+      });
+    } else if (groupId) {
+      const groupChat = await fetchGroupChat({ groupId: parseInt(groupId) });
+      if (!groupChat) {
+        return res.status(404).json({ message: "Group chat not found" });
+      }
+
+      await createGroupMessage({
+        content: imageUrl,
+        groupId: parseInt(groupId),
+        userId,
+      });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Either receiverId or groupId must be provided" });
+    }
 
     return res.status(200).json({
       message: "Image uploaded successfully",
@@ -239,8 +251,8 @@ async function getGroupMessages(req: Request, res: Response) {
     }
     const { groupId } = req.params;
     const numberGroupId = parseInt(groupId);
-    const groupChat = await fetchGroupChat({ groupId: numberGroupId });
 
+    const groupChat = await fetchGroupChat({ groupId: numberGroupId });
     if (groupChat) {
       const messages = await fetchGroupMessages({ groupId: numberGroupId });
 
