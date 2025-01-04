@@ -5,7 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "vitest --no-file-parallelism",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "start": "ts-node-dev app.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
